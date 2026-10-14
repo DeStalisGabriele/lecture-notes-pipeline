@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lecture-notes-pipeline"
+version = "0.1.0"
+description = "From lecture recordings and photos of handwritten exercises to Word notes, using NotebookLM and Claude Code subagents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Gabriele De Stalis" }]
+dependencies = [
+    "notebooklm-py[browser]>=0.8.5",
+    "python-docx>=1.2",
+    "pymupdf>=1.26",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+lecture-notes = "lecture_notes.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

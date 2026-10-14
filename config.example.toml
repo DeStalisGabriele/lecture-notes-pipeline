@@ -1,0 +1,63 @@
+# Copy to ~/.lecture-notes/config.toml (or point LECTURE_NOTES_CONFIG at it) and edit.
+
+[paths]
+recordings = "~/OneDrive/Documents/Sound recordings"   # where the recorder saves audio
+courses = "~/OneDrive/Desktop/University/Year 1"       # one folder per course: slides (PDF) + notes
+work = "~/.lecture-notes/work"                         # transcripts, drafts, figures, backups
+notes_file = "TEORIA.docx"                             # the notes document inside each course folder
+telegram_inbox = "~/.claude/channels/telegram/inbox"   # optional: photos sent to the Telegram bot
+
+[options]
+language = "it"                        # language of lectures and notes
+tolerance_minutes = 20                 # recordings may start a bit before or after the slot
+summary_heading = "schema riassuntivo" # final chapter that must stay last in the notes
+
+# The folder name of each course is also the prefix of its recordings:
+# "<Course> - Lezione N - Parte K.m4a"
+[courses."Economia Aziendale"]
+aliases = ["ea", "economia aziendale"]
+notebook = "Economia aziendale"        # NotebookLM notebook title (default: course name)
+
+[courses."Sistema Economico"]
+aliases = ["ase", "analisi dei sistemi economici", "economia politica"]
+notebook = "Analisi dei sistemi economici"
+
+[courses."Sistemi Informativi Aziendali"]
+aliases = ["sia", "sistemi informativi"]
+
+# Weekly timetable, used to name recordings
+[[timetable]]
+day = "mon"
+start = "08:30"
+end = "11:30"
+course = "Sistema Economico"
+
+[[timetable]]
+day = "mon"
+start = "11:30"
+end = "14:30"
+course = "Sistemi Informativi Aziendali"
+
+[[timetable]]
+day = "tue"
+start = "13:00"
+end = "16:00"
+course = "Sistema Economico"
+
+[[timetable]]
+day = "tue"
+start = "16:00"
+end = "19:00"
+course = "Economia Aziendale"
+
+[[timetable]]
+day = "thu"
+start = "08:30"
+end = "11:30"
+course = "Economia Aziendale"
+
+[[timetable]]
+day = "thu"
+start = "11:30"
+end = "14:30"
+course = "Sistemi Informativi Aziendali"
