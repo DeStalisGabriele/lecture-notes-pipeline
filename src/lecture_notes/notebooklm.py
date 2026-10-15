@@ -38,6 +38,17 @@ def run_json(*args: str, timeout: int = 900):
     return json.loads(text[min(i for i in (text.find("{"), text.find("[")) if i >= 0):])
 
 
+def auth_status() -> tuple[bool, str]:
+    """(signed in?, message). The Google session expires every few weeks; a server can't sign in again
+    by itself (no browser), so this is meant for a daily check that warns the user."""
+    try:
+        notebooks = run_json("list", timeout=120).get("notebooks", [])
+    except (NotebookLMError, ValueError) as e:
+        expired = "auth" in str(e).lower()
+        return False, "NotebookLM session expired: run `notebooklm login`." if expired else str(e)
+    return True, f"Signed in to NotebookLM ({len(notebooks)} notebooks)."
+
+
 def find_or_create_notebook(title: str) -> str:
     for nb in run_json("list").get("notebooks", []):
         if (nb.get("title") or "").strip().lower() == title.lower():

@@ -19,3 +19,8 @@ All commands are `lecture-notes …` (see `config.example.toml`). Work folder: `
 3. When `draft.md` exists, two subagents in parallel, in the background: `slide-scout` and `editor`, each given the work folder.
 4. Merge: swap figure references in `notes.md` for the ones in `figures.json`; check there is no `$` (LaTeX) and that every PNG exists. Then `lecture-notes write <course> <n> <folder>/notes.md` (backs up the document, keeps a final summary chapter last, continues numbering, builds T-accounts).
 5. Report: chapters added, figures inserted and **missing slides**, so the user can download them.
+
+## When something fails
+- `notebook` fails with an auth error (check with `lecture-notes auth`): the Google session expired. Ask the user to sign in again (`notebooklm login`, or `scripts/login-and-push.ps1` when you run on a server), then run `notebook` again: sources already uploaded are reused. Never type credentials for them.
+- `write` says the document is open in Word: ask the user to close it, then run `write` again.
+- On a server, recordings arrive through Syncthing: before `prepare`, check that their size has stopped growing.

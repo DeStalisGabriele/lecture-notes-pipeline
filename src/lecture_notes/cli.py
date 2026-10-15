@@ -7,6 +7,7 @@
   lecture-notes write COURSE N NOTES.md           append notes to the course's Word document
   lecture-notes photos COURSE [FILES...] [--hours H]   start an exercises folder from photos
   lecture-notes photos-write FOLDER NOTES.md      append transcribed exercises
+  lecture-notes auth                              check the NotebookLM login (exit code 1 if expired)
 """
 from __future__ import annotations
 
@@ -170,6 +171,13 @@ def cmd_photos_write(cfg: Config, args) -> None:
         f.writelines(o + "\n" for o in state.get("origin", []))
 
 
+def cmd_auth(cfg: Config, args) -> None:
+    ok, message = notebooklm.auth_status()
+    print(message)
+    if not ok:
+        raise SystemExit(1)
+
+
 def main(argv: list[str] | None = None) -> None:
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
@@ -188,7 +196,10 @@ def main(argv: list[str] | None = None) -> None:
     s.add_argument("--hours", type=float, default=6); s.set_defaults(fn=cmd_photos)
     s = sub.add_parser("photos-write"); s.add_argument("folder"); s.add_argument("file")
     s.set_defaults(fn=cmd_photos_write)
+    sub.add_parser("auth").set_defaults(fn=cmd_auth)
     args = ap.parse_args(argv)
+    if args.fn is cmd_auth:  # works without a config file
+        return cmd_auth(None, args)
     args.fn(load(args.config), args)
 
 

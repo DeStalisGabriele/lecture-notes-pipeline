@@ -77,6 +77,24 @@ Copy `config.example.toml` to `~/.lecture-notes/config.toml` and set:
 
 To use the slash commands, copy `claude/skills/*` into `.claude/skills/` and `claude/agents/*` into `.claude/agents/` of the folder where you run Claude Code.
 
+## Running it on an always-on server
+
+I run Claude Code 24/7 on a small Linux box, behind a Telegram bot, so `/lecture` also works from my phone with the PC switched off. The pipeline itself needs no changes: only the paths in the server's `config.toml` differ.
+
+- **Files.** Three folders are synced from the PC with [Syncthing](https://syncthing.net): the recordings, the course folders and the PC's Downloads (where photos from WhatsApp land). Recordings that live in OneDrive must be set to "always keep on this device", or Syncthing only sees placeholders.
+- **Word open on the PC.** `write` refuses to touch a document that Word has open, by looking for Word's `~$` lock file. Don't put `~$*` in `.stignore`: syncing the lock file is what lets the server see that the document is open on the PC.
+- **Login.** NotebookLM is reached with a Google session saved by `notebooklm login`, which needs a browser. Sign in on the PC and copy `~/.notebooklm/profiles/default/storage_state.json` to the server (mode 600). That file is a live Google session, so only do this on a machine you trust.
+- **Expired login.** `lecture-notes auth` exits with 1 when the session has expired. [`scripts/check-auth.sh`](scripts/check-auth.sh) runs it every morning from a systemd timer and sends a Telegram warning. [`scripts/login-and-push.ps1`](scripts/login-and-push.ps1), behind a desktop shortcut, signs in again on the PC, copies the session to the server and confirms on Telegram.
+
+```ini
+# ~/.config/systemd/user/notebooklm-auth.timer   (plus a oneshot .service running check-auth.sh)
+[Timer]
+OnCalendar=*-*-* 07:45
+Persistent=true
+[Install]
+WantedBy=timers.target
+```
+
 ## Conventions it relies on
 
 - Recordings are named `<Course> - Lezione N - Parte K.m4a` (the renamer produces exactly this).
@@ -96,6 +114,7 @@ They cover:
 ## Limits
 
 - notebooklm-py uses undocumented Google APIs, so a change on Google's side can break the `notebook` step until the library is updated.
+- The Google session expires every few weeks and can only be renewed from a machine with a browser.
 - The renamer needs a fixed timetable. Make-up lectures or moved slots are reported as "outside the timetable" and named by hand.
 - The prompts and Markdown conventions assume Italian lectures and Italian accounting (Dare/Avere). Other languages need a new draft prompt in [`notebooklm.py`](src/lecture_notes/notebooklm.py).
 
