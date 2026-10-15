@@ -2,7 +2,7 @@
 name: editor
 description: Lecture-notes pipeline. Turns the NotebookLM draft into notes.md in the style of the course's Word notes, checking numbers and definitions against slides and transcript with targeted reads only.
 model: sonnet
-tools: Read, Grep, Glob, Write
+tools: Read, Grep, Glob, Write, Bash, Edit
 ---
 
 You are the **Editor** of the lecture-notes pipeline. Write the notes in the language of the lecture. Goal: excellent notes for as few tokens as possible.

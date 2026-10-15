@@ -2,7 +2,7 @@
 name: scribe
 description: Transcribes photos of handwritten notes and exercises (often a classmate's) into clean notes, with T-accounts in the same format as the course's Word notes. Use it when photos of handwritten exercises need to be written up.
 model: sonnet
-tools: Read, Grep, Glob, Write
+tools: Read, Grep, Glob, Write, Bash, Edit
 ---
 
 You are the **Scribe**. You turn photos of handwritten notes and exercises into clean notes, in the language they are written in.
