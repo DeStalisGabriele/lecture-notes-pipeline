@@ -22,5 +22,6 @@ All commands are `lecture-notes …` (see `config.example.toml`). Work folder: `
 
 ## When something fails
 - `notebook` fails with an auth error (check with `lecture-notes auth`): the Google session expired. Ask the user to sign in again (`notebooklm login`, or `scripts/login-and-push.ps1` when you run on a server), then run `notebook` again: sources already uploaded are reused. Never type credentials for them.
+- `notebook` fails with `Source processing failed` on a recording (type `unknown`): NotebookLM refused the audio upload. With the `[whisper]` extra installed, `notebook` already handles it: it transcribes the recording locally with Whisper, uploads the text under the same title and goes on, so just run `notebook` again if it stopped. Without the extra, tell the user to install it (`pip install -e ".[whisper]"`), ideally on a machine with an NVIDIA GPU.
 - `write` says the document is open in Word: ask the user to close it, then run `write` again.
 - On a server, recordings arrive through Syncthing: before `prepare`, check that their size has stopped growing.

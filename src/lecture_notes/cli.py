@@ -17,7 +17,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import docx_writer, notebooklm, photos, renamer, slides
+from . import docx_writer, notebooklm, photos, renamer, slides, transcribe
 from .config import Config, Course, load
 
 
@@ -76,6 +76,20 @@ def cmd_prepare(cfg: Config, args) -> None:
     print(json.dumps(state, ensure_ascii=False, indent=2))
 
 
+def _whisper_instead(cfg: Config, nb: str, failed_id: str, audio: Path, folder: Path) -> str:
+    """NotebookLM sometimes refuses audio uploaded through the API (status error, type unknown)
+    while the web app still accepts it: transcribe locally and upload the text under the same title."""
+    print(f"NotebookLM could not process {audio.name}: transcribing it with Whisper ...", flush=True)
+    try:
+        notebooklm.delete(nb, failed_id)
+    except notebooklm.NotebookLMError:
+        pass
+    text = transcribe.transcribe(audio, folder / f"whisper - {audio.stem}.txt", cfg.whisper_model, cfg.language)
+    sid = notebooklm.add_file(nb, text, title=audio.name)
+    notebooklm.wait(nb, sid)
+    return sid
+
+
 def cmd_notebook(cfg: Config, args) -> None:
     course = cfg.course(args.course)
     folder = work_folder(cfg, course, args.n)
@@ -95,9 +109,16 @@ def cmd_notebook(cfg: Config, args) -> None:
             print(f"Uploading {path.name} ...", flush=True)
             sources[path.name] = notebooklm.add_file(nb, path)
         write_state(folder, state)
-    for title, sid in sources.items():
+    paths = {Path(f).name: Path(f) for f in state["audio"]}
+    for title, sid in list(sources.items()):
         print(f"Waiting for {title} ...", flush=True)
-        notebooklm.wait(nb, sid)
+        try:
+            notebooklm.wait(nb, sid)
+        except notebooklm.NotebookLMError:
+            if title not in paths or not transcribe.available():
+                raise
+            sources[title] = _whisper_instead(cfg, nb, sid, paths[title], folder)
+            write_state(folder, state)
     for title, sid in sources.items():
         if not title.lower().endswith(".pdf"):
             dest = folder / f"transcript - {Path(title).stem.split(' - ')[-1]}.txt"

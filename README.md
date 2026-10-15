@@ -57,6 +57,7 @@ Lecture 6 of *Economia Aziendale* (taxes and timing differences, leasing, bonds)
 - **Uploading with the notebooklm-py CLI on Windows.** The CLI switches to `WindowsSelectorEventLoopPolicy`. With that event loop, large uploads die with `AssertionError: Data should not be empty` and the source stays in "preparing" forever. [`_nlm.py`](src/lecture_notes/_nlm.py) runs the same CLI on the default Proactor loop, and 130 MB recordings upload fine.
 - **Trusting NotebookLM's slide numbers.** In the first run the draft pointed to slides 29 and 38: the right ones were 94 and 106. The draft now cites slide *titles*, and the slide-scout greps them in the extracted text.
 - **Guessing the course from the first minutes of audio.** It costs a transcription and tokens for something the timetable already says. Recording start = file time − duration, and the slot that contains the midpoint wins. Phone recordings received from classmates carry the download time, so their timestamp is read from the file name (`Voce 261013_132552`).
+- **Audio refused by NotebookLM.** Since October 2026 NotebookLM has failed to process every audio file uploaded through notebooklm-py (m4a or mp3, from Windows or Linux: status `error`, type `unknown`), while the web app still accepts the same files. PDFs are not affected. When a recording fails, `notebook` deletes it, transcribes it locally with [faster-whisper](https://github.com/SYSTRAN/faster-whisper) and uploads the transcript as a text source under the same title, so the draft step does not change. On an RTX 2080, `large-v3` takes about 12 s per 5 minutes of audio, so about 7 minutes for a three-hour lecture. Without a GPU, `large-v3-turbo` on 8 CPU cores takes about an hour.
 - **A page-is-a-figure heuristic on its own.** Raster images or more than 25 vector drawings flagged 68 of 118 pages, because tables and boxes count as drawings. It is now only the pool of candidates the slide-scout picks from.
 
 ## Setup
@@ -67,8 +68,11 @@ Requirements: Python 3.11+, `ffprobe` (from FFmpeg) on the PATH, a Google accoun
 python -m venv .venv
 .venv\Scripts\activate        # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
+pip install -e ".[whisper]"  # optional: local transcription when NotebookLM refuses a recording
 notebooklm login              # Google sign-in in a browser window, once
 ```
+
+On Linux with an NVIDIA GPU, Whisper also needs the CUDA 12 libraries: `pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"`, then add their `lib` folders (under `site-packages/nvidia/`) to `LD_LIBRARY_PATH`. Without them it falls back to the CPU.
 
 Copy `config.example.toml` to `~/.lecture-notes/config.toml` and set:
 - the recordings folder and the course folders (one folder per course, holding its slide PDFs and the notes document);
@@ -108,6 +112,7 @@ pytest
 ```
 
 They cover:
+- the Whisper fallback: a refused recording is replaced by its transcript under the same title;
 - timetable matching, including phone timestamps and lecture and part numbering;
 - the Word writer: numbering that continues an existing chapter, the summary chapter kept last, Markdown tables and T-accounts, the backup.
 

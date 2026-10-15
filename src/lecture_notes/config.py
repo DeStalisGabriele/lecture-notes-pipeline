@@ -36,6 +36,7 @@ class Config:
     tolerance_minutes: int = 20
     summary_heading: str = r"schema riassuntivo"  # final chapter that must stay last
     language: str = "it"
+    whisper_model: str = "large-v3"  # fallback transcription when NotebookLM refuses an audio
 
     def course(self, name: str) -> Course:
         key = name.strip().lower()
@@ -82,4 +83,5 @@ def load(path: Path | None = None) -> Config:
         tolerance_minutes=opts.get("tolerance_minutes", 20),
         summary_heading=opts.get("summary_heading", r"schema riassuntivo"),
         language=opts.get("language", "it"),
+        whisper_model=opts.get("whisper_model", "large-v3"),
     )

@@ -63,10 +63,14 @@ def ready_sources(notebook_id: str) -> dict[str, str]:
     return {s["title"]: s["id"] for s in sources if s.get("status") == "ready"}
 
 
-def add_file(notebook_id: str, path: Path) -> str:
-    res = run_json("source", "add", str(path), "-n", notebook_id, "--title", path.name,
+def add_file(notebook_id: str, path: Path, title: str | None = None) -> str:
+    res = run_json("source", "add", str(path), "-n", notebook_id, "--title", title or path.name,
                    "--request-timeout", "900", timeout=1200)
     return (res.get("source") or res)["id"]
+
+
+def delete(notebook_id: str, source_id: str) -> None:
+    run("source", "delete", source_id, "-n", notebook_id, "-y")
 
 
 def wait(notebook_id: str, source_id: str) -> None:

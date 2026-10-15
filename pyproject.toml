@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+whisper = ["faster-whisper>=1.1"]
 
 [project.scripts]
 lecture-notes = "lecture_notes.cli:main"
