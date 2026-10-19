@@ -17,7 +17,15 @@ Work folder contents:
 Write `notes.md`:
 - `# Title` for chapters, `## Title` for sections, **no numbers** (the writer adds them). No overall title. Short titles, sentence case.
 - Clear, complete paragraphs; `- ` lists; **bold** for key terms; "**Attenzione:**" for what matters at the exam.
-- Formulas and calculations as plain text that reads well in Word, **no LaTeX**: "Imponibile fiscale = 1.000 − 500 = 500 €".
+- Formulas inside sentences as plain text that reads well in Word, no `$`: "Imponibile fiscale = 1.000 − 500 = 500 €".
+- **Calculations as Word equations**: each step of a calculation on its own line starting with `EQ:`, then the formula in LaTeX **without `$`**, then ` || ` and a short comment on what the step does. The writer turns them into native Word equations with the comments aligned on the right:
+  ```
+  EQ: Q = K^{0.5} \cdot L^{0.5} || funzione di produzione
+  EQ: Q = 16^{0.5} \cdot 9^{0.5} || sostituisco K = 16 e L = 9
+  EQ: Q = 4 \cdot 3 = 12 || calcolo le radici
+  ```
+  Use `\frac{a}{b}`, `\cdot`, `\text{MRTS}` for acronyms, `1{,}78` for decimal commas, `\approx`, `\Delta`, subscripts like `PM_L`. No prose on `EQ:` lines and no `$` anywhere else: explanations stay in normal paragraphs.
+
 - **T-accounts** (accounting entries), one line per entry written as "amount — description":
   ```
   MASTRINO: Cassa (attivo)

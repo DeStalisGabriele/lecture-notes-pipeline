@@ -11,22 +11,74 @@ Supported Markdown (what the agents are told to write):
   MASTRINO: Cassa (attivo)    T-account (Italian accounting): merged title row, Dare | Avere,
   DARE: 420 — description     one entry per line
   AVERE: 2.000 — description
+  EQ: Q = 4 \cdot 3 = 12 || calcolo le radici
+                              one step of a calculation: LaTeX (no $) and an optional comment.
+                              Consecutive EQ lines become a borderless table, a native Word
+                              equation on the left and the comment in grey italics on the right.
+
+Equations need the optional `latex2mathml` package and Office's MML2OMML.XSL stylesheet
+(LaTeX -> MathML -> OMML). Without them the formula is written as plain text.
 
 If the document ends with a summary chapter (e.g. "33. Schema riassuntivo delle formule"),
 the new text goes before it and the summary is renumbered, so it stays last.
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import time
 from pathlib import Path
 
 import docx
-from docx.shared import Cm
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.oxml.ns import qn
+from docx.shared import Cm, RGBColor
+from lxml import etree
 
 TABLE_RULE = re.compile(r"^\s*\|?\s*:?-{2,}")
 NUMBER = re.compile(r"\s*(\d+)\.")
+EQUATION = re.compile(r"^\s*EQ:\s*(.+?)\s*(?:\|\|\s*(.*))?$")
+# Office ships the MathML -> OMML stylesheet; it cannot be redistributed, so it is looked up here
+OFFICE_XSL = [Path(os.environ.get(v, "")) / "Microsoft Office" / "root" / f"Office{n}" / "MML2OMML.XSL"
+              for v in ("ProgramFiles", "ProgramFiles(x86)") for n in (16, 15)]
+
+
+def find_mml2omml(configured: Path | None = None) -> Path | None:
+    for p in ([configured] if configured else []) + OFFICE_XSL:
+        if p and p.is_file():
+            return p
+    return None
+
+
+class _Equations:
+    """LaTeX -> native Word equation (OMML), or None when the tools are missing."""
+
+    def __init__(self, xsl: Path | None):
+        self.transform = None
+        try:
+            from latex2mathml.converter import convert
+            if xsl:
+                self.convert, self.transform = convert, etree.XSLT(etree.parse(str(xsl)))
+        except ImportError:
+            pass
+        self.failed: list[str] = []
+
+    def omml(self, latex: str):
+        if not self.transform:
+            return None
+        try:
+            return self.transform(etree.fromstring(self.convert(latex).encode())).getroot()
+        except Exception:  # better plain text than a lost step
+            self.failed.append(latex)
+            return None
+
+
+def _equation_paragraph(paragraph, omath) -> None:
+    # alone in the paragraph and inside oMathPara, so Word shows it in display style (full-size fractions)
+    block = etree.SubElement(paragraph._p, qn("m:oMathPara"))
+    etree.SubElement(etree.SubElement(block, qn("m:oMathParaPr")), qn("m:jc")).set(qn("m:val"), "left")
+    block.append(omath)
 
 
 def _runs(paragraph, text: str) -> None:
@@ -52,7 +104,8 @@ def outline(path: Path) -> list[str]:
 
 
 def append_markdown(doc_path: Path, md_path: Path, backup_dir: Path | None = None,
-                    summary_heading: str = r"schema riassuntivo", image_width_cm: float = 15) -> dict:
+                    summary_heading: str = r"schema riassuntivo", image_width_cm: float = 15,
+                    mml2omml_xsl: Path | None = None) -> dict:
     if doc_path.exists():
         if backup_dir:
             backup_dir.mkdir(parents=True, exist_ok=True)
@@ -87,7 +140,30 @@ def append_markdown(doc_path: Path, md_path: Path, backup_dir: Path | None = Non
     marker = (body[-2] if body[-1].tag.endswith("sectPr") else body[-1]) if len(body) >= 2 else None
     table: list[str] = []
     account: dict | None = None
-    added = {"chapters": [], "pictures": 0, "tables": 0, "t_accounts": 0}
+    steps: list[tuple[str, str]] = []
+    eq = _Equations(find_mml2omml(mml2omml_xsl))
+    added = {"chapters": [], "pictures": 0, "tables": 0, "t_accounts": 0, "equations": 0}
+
+    def flush_steps():
+        t = d.add_table(rows=len(steps), cols=2)
+        t.autofit = False
+        for i, (latex, comment) in enumerate(steps):
+            left, right = t.cell(i, 0), t.cell(i, 1)
+            left.width, right.width = Cm(10.5), Cm(6)
+            right.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            if (omath := eq.omml(latex)) is not None:
+                _equation_paragraph(left.paragraphs[0], omath)
+                added["equations"] += 1
+            else:
+                left.paragraphs[0].add_run(latex)
+                if not eq.transform:
+                    added["equations_as_text"] = "latex2mathml or MML2OMML.XSL not found"
+            if comment:
+                run = right.paragraphs[0].add_run(comment)
+                run.italic = True
+                run.font.color.rgb = RGBColor(0x59, 0x59, 0x59)
+        steps.clear()
+        par()
 
     def flush_table():
         rows = [[c.strip() for c in r.strip().strip("|").split("|")] for r in table if not TABLE_RULE.match(r)]
@@ -124,6 +200,11 @@ def append_markdown(doc_path: Path, md_path: Path, backup_dir: Path | None = Non
 
     for raw in md_path.read_text(encoding="utf-8").splitlines():
         line = raw.rstrip()
+        if m := EQUATION.match(line):
+            steps.append((m.group(1), (m.group(2) or "").strip()))
+            continue
+        if steps:
+            flush_steps()
         if m := re.match(r"^\s*MASTRINO:\s*(.+)$", line):
             if table:
                 flush_table()
@@ -166,6 +247,8 @@ def append_markdown(doc_path: Path, md_path: Path, backup_dir: Path | None = Non
             _runs(par(style="List Paragraph"), re.sub(r"^\s*[-*] ", "", line))
         else:
             _runs(par(), line.strip())
+    if steps:
+        flush_steps()
     if table:
         flush_table()
     if account:
@@ -186,5 +269,7 @@ def append_markdown(doc_path: Path, md_path: Path, backup_dir: Path | None = Non
                     break
         added["summary_moved_to"] = chapter + 1
 
+    if eq.failed:
+        added["equations_as_text"] = eq.failed
     d.save(str(doc_path))
     return added

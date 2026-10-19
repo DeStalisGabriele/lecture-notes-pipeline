@@ -151,7 +151,8 @@ def _write(cfg: Config, notes: Path, md: Path, folder: Path) -> None:
     # Word's lock file: "~$" + the name, minus up to two leading characters depending on its length
     if any(notes.with_name("~$" + notes.name[k:]).exists() for k in (0, 1, 2)):
         raise SystemExit(f"{notes.name} is open in Word: close it and run again.")
-    added = docx_writer.append_markdown(notes, md, backup_dir=folder, summary_heading=cfg.summary_heading)
+    added = docx_writer.append_markdown(notes, md, backup_dir=folder, summary_heading=cfg.summary_heading,
+                                        mml2omml_xsl=cfg.mml2omml_xsl)
     print(json.dumps(added, ensure_ascii=False, indent=2))
 
 

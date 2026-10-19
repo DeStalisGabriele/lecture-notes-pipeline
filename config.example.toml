@@ -12,6 +12,8 @@ language = "it"                        # language of lectures and notes
 tolerance_minutes = 20                 # recordings may start a bit before or after the slot
 summary_heading = "schema riassuntivo" # final chapter that must stay last in the notes
 whisper_model = "large-v3"             # local fallback when NotebookLM refuses a recording (needs the [whisper] extra)
+# mml2omml_xsl = "~/.lecture-notes/MML2OMML.XSL"  # Office's stylesheet for EQ: lines (needs the [equations] extra);
+                                                 # found by itself in a Windows Office install, copy it on Linux
 
 # The folder name of each course is also the prefix of its recordings:
 # "<Course> - Lezione N - Parte K.m4a"

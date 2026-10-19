@@ -1,6 +1,12 @@
 import docx
+import pytest
 
-from lecture_notes.docx_writer import append_markdown, outline
+from lecture_notes.docx_writer import append_markdown, find_mml2omml, outline
+
+STEPS = ("# Esercizio\nCalcolo della produzione.\n"
+         "EQ: Q = K^{0.5} \\cdot L^{0.5} || funzione di produzione\n"
+         "EQ: Q = \\frac{16}{4} = 4 || sostituisco i valori\n"
+         "Fine.\n")
 
 
 def make_notes(path, with_summary=True):
@@ -68,3 +74,28 @@ def test_markdown_table_bold_and_backup(tmp_path):
     assert [c.text for c in t.rows[1].cells] == ["Imposte", "1.200", "800"]
     assert t.rows[1].cells[0].paragraphs[0].runs[0].bold
     assert len(list((tmp_path / "bk").glob("TEORIA-backup-*.docx"))) == 1
+
+
+def test_equation_steps_without_stylesheet_fall_back_to_text(tmp_path, monkeypatch):
+    monkeypatch.setattr("lecture_notes.docx_writer.OFFICE_XSL", [])
+    notes = tmp_path / "TEORIA.docx"
+    added = append_markdown(notes, write_md(tmp_path, STEPS))
+    t = docx.Document(notes).tables[0]
+    assert [[c.text for c in r.cells] for r in t.rows] == [
+        [r"Q = K^{0.5} \cdot L^{0.5}", "funzione di produzione"],
+        [r"Q = \frac{16}{4} = 4", "sostituisco i valori"],
+    ]
+    assert added["equations"] == 0 and "equations_as_text" in added
+    assert docx.Document(notes).paragraphs[-1].text == "Fine."
+
+
+@pytest.mark.skipif(find_mml2omml() is None, reason="needs Office's MML2OMML.XSL")
+def test_equation_steps_become_word_equations(tmp_path):
+    pytest.importorskip("latex2mathml")
+    notes = tmp_path / "TEORIA.docx"
+    added = append_markdown(notes, write_md(tmp_path, STEPS))
+    assert added["equations"] == 2 and "equations_as_text" not in added
+    t = docx.Document(notes).tables[0]
+    m = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
+    assert len(t._tbl.findall(f".//{m}oMathPara")) == 2
+    assert t.cell(1, 1).paragraphs[0].runs[0].italic

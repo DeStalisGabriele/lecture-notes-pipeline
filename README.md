@@ -69,6 +69,7 @@ python -m venv .venv
 .venv\Scripts\activate        # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
 pip install -e ".[whisper]"  # optional: local transcription when NotebookLM refuses a recording
+pip install -e ".[equations]" # optional: EQ: lines as native Word equations (also needs Office's MML2OMML.XSL)
 notebooklm login              # Google sign-in in a browser window, once
 ```
 
@@ -104,6 +105,7 @@ WantedBy=timers.target
 - Recordings are named `<Course> - Lezione N - Parte K.m4a` (the renamer produces exactly this).
 - The notes document uses Word's built-in `Heading 1` and `Heading 2` styles, numbered `31.` and `31.2`, and may end with a summary chapter that must stay last (`summary_heading` in the config).
 - T-accounts are written by the agents as `MASTRINO:` / `DARE:` / `AVERE:` lines and become a two-column table with a merged title row.
+- Calculations are written as `EQ: <LaTeX> || <comment>` lines, one step per line. Consecutive steps become a borderless two-column table: a native Word equation on the left (LaTeX -> MathML with [latex2mathml](https://github.com/roniemartinez/latex2mathml), then MathML -> OMML with Office's `MML2OMML.XSL`) and the comment in grey italics on the right. The stylesheet is part of Office and is not redistributed here: the writer finds it in a Windows Office install, on Linux copy it and set `mml2omml_xsl` in the config. Without it the formula is written as plain text.
 
 ## Tests
 
@@ -114,7 +116,7 @@ pytest
 They cover:
 - the Whisper fallback: a refused recording is replaced by its transcript under the same title;
 - timetable matching, including phone timestamps and lecture and part numbering;
-- the Word writer: numbering that continues an existing chapter, the summary chapter kept last, Markdown tables and T-accounts, the backup.
+- the Word writer: numbering that continues an existing chapter, the summary chapter kept last, Markdown tables and T-accounts, equation steps (native equations, or plain text when the stylesheet is missing), the backup.
 
 ## Limits
 

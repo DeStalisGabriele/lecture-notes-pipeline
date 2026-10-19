@@ -17,7 +17,7 @@ All commands are `lecture-notes …` (see `config.example.toml`). Work folder: `
    - `lecture-notes notebook <course> <n>` **in the background** (5-30 min): uploads recordings and slides to the course notebook (reusing sources already there), downloads `transcript - Parte K.txt` and `draft.md`.
    - `lecture-notes slides <course> <n>`: `slides.txt`, `slides/pNN.png`, `all-slides.txt`, `notes-outline.txt`.
 3. When `draft.md` exists, two subagents in parallel, in the background: `slide-scout` and `editor`, each given the work folder.
-4. Merge: swap figure references in `notes.md` for the ones in `figures.json`; check there is no `$` (LaTeX) and that every PNG exists. Then `lecture-notes write <course> <n> <folder>/notes.md` (backs up the document, keeps a final summary chapter last, continues numbering, builds T-accounts).
+4. Merge: swap figure references in `notes.md` for the ones in `figures.json`; check there is no `$` and that every PNG exists (`EQ:` lines hold LaTeX without `$` and become Word equations). Then `lecture-notes write <course> <n> <folder>/notes.md` (backs up the document, keeps a final summary chapter last, continues numbering, builds T-accounts).
 5. Report: chapters added, figures inserted and **missing slides**, so the user can download them.
 
 ## When something fails

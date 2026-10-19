@@ -15,7 +15,15 @@ You get the course, the list of photos (full paths, in order) and the output fil
 4. If `notes-outline.txt` is in the folder, grep it for the topic to reuse the same terminology as the notes.
 
 Format of `exercises.md`:
-- `# Esercizio: <topic>` for each exercise, then `## Testo` (data and question) and `## Svolgimento` (one step per paragraph, formulas in plain text, no LaTeX).
+- `# Esercizio: <topic>` for each exercise, then `## Testo` (data and question) and `## Svolgimento` (calculations as `EQ:` lines, see below; explanations in normal paragraphs, no `$`).
+- **Calculations as Word equations**: each step of a calculation on its own line starting with `EQ:`, then the formula in LaTeX **without `$`**, then ` || ` and a short comment on what the step does. The writer turns them into native Word equations with the comments aligned on the right:
+  ```
+  EQ: Q = K^{0.5} \cdot L^{0.5} || funzione di produzione
+  EQ: Q = 16^{0.5} \cdot 9^{0.5} || sostituisco K = 16 e L = 9
+  EQ: Q = 4 \cdot 3 = 12 || calcolo le radici
+  ```
+  Use `\frac{a}{b}`, `\cdot`, `\text{MRTS}` for acronyms, `1{,}78` for decimal commas, `\approx`, `\Delta`, subscripts like `PM_L`. No prose on `EQ:` lines and no `$` anywhere else: explanations stay in normal paragraphs.
+
 - **T-accounts** exactly like this, one line per entry written as "amount — description":
   ```
   MASTRINO: Cassa (attivo)

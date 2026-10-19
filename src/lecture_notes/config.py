@@ -37,6 +37,7 @@ class Config:
     summary_heading: str = r"schema riassuntivo"  # final chapter that must stay last
     language: str = "it"
     whisper_model: str = "large-v3"  # fallback transcription when NotebookLM refuses an audio
+    mml2omml_xsl: Path | None = None  # Office's MathML -> OMML stylesheet, for EQ: lines (found by itself on Windows)
 
     def course(self, name: str) -> Course:
         key = name.strip().lower()
@@ -84,4 +85,5 @@ def load(path: Path | None = None) -> Config:
         summary_heading=opts.get("summary_heading", r"schema riassuntivo"),
         language=opts.get("language", "it"),
         whisper_model=opts.get("whisper_model", "large-v3"),
+        mml2omml_xsl=_path(opts["mml2omml_xsl"]) if opts.get("mml2omml_xsl") else None,
     )
