@@ -33,7 +33,7 @@ from pathlib import Path
 import docx
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
-from docx.shared import Cm, RGBColor
+from docx.shared import Cm, Pt, RGBColor
 from lxml import etree
 
 TABLE_RULE = re.compile(r"^\s*\|?\s*:?-{2,}")
@@ -151,6 +151,9 @@ def append_markdown(doc_path: Path, md_path: Path, backup_dir: Path | None = Non
             left, right = t.cell(i, 0), t.cell(i, 1)
             left.width, right.width = Cm(10.5), Cm(6)
             right.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            for cell in (left, right):  # some air between steps even when Normal has no spacing
+                cell.paragraphs[0].paragraph_format.space_before = Pt(3)
+                cell.paragraphs[0].paragraph_format.space_after = Pt(3)
             if (omath := eq.omml(latex)) is not None:
                 _equation_paragraph(left.paragraphs[0], omath)
                 added["equations"] += 1
